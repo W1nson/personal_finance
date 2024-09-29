@@ -4,13 +4,17 @@ from typing import Union
 
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi_pagination import Page, add_pagination, paginate
+from fastapi.middleware.cors import CORSMiddleware
 
 from sqlalchemy import create_engine, Float
 from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy import select
+from fastapi_pagination.ext.sqlalchemy import paginate
 from models import Transactions, Base
 
 from pydantic import BaseModel, FiniteFloat
 import pandas as pd 
+
 from datetime import date
 import os 
 from dotenv import load_dotenv
@@ -32,7 +36,23 @@ data = pd.read_csv('Credit.csv', index_col=0)
 data.rename(columns={'Transaction Date': 'transaction_date', 'Description': 'description','Amount': 'amount','Category': 'category','Bank': 'bank'}, inplace=True)
 data.to_sql('transactions', con=engine, if_exists='append', index=True, index_label='id', dtype={'amount': Float})
 
+
 app = FastAPI()
+
+origins = [
+    "http://localhost.tiangolo.com",
+    "https://localhost.tiangolo.com",
+    "http://localhost",
+    "http://localhost:8080",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 # Dependency
@@ -62,7 +82,7 @@ class Transaction(BaseModel):
 
 @app.get("/")
 def read_root():
-    return {"Hello": "World"}
+    return {"response": "work"}
 
 
 @app.get("/items/{item_id}")
@@ -88,13 +108,8 @@ def row2dict(row):
     return d
 
 @app.get('/transactions')
-async def get_transactions( db: Session = Depends(get_db)) -> Page[Transaction]:
-    data = db.query(Transactions).all()
-    
-    data = [row2dict(d) for d in data]
-
-    print(data)
-    return paginate(data)
+def get_transactions( db: Session = Depends(get_db)) -> Page[Transaction]:
+    return paginate(db, select(Transactions))
 
 
 add_pagination(app)

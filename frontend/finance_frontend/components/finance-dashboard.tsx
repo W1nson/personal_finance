@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts'
@@ -69,6 +69,21 @@ export function FinanceDashboardComponent() {
   const [searchTerm, setSearchTerm] = useState<string>('')
   const { theme } = useTheme()
 
+  const [transactionData, setTransactionData]  = useState<TransactionData[]>([])
+  useEffect(()=>{
+    const fetchTransaction = async () => { 
+      const response = await fetch('http://localhost:8000/transactions?page=1&size=50', {
+        mode: 'no-cors',
+        method: 'GET'
+      })
+      const res = await response.json()
+      setTransactionData(res.items)
+    } 
+    
+    fetchTransaction(); 
+    console.log(transactionData)
+  })
+
   const onPieEnter = (_: unknown, index: number) => {
     setActiveIndex(index)
   }
@@ -81,6 +96,7 @@ export function FinanceDashboardComponent() {
       setSortDirection('asc')
     }
   }
+
 
   const filteredAndSortedTransactions = useMemo(() => {
     return transactionData

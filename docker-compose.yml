@@ -8,7 +8,16 @@ services:
     ports: 
       - 3000:3000
     depends_on:
-      - backend 
+      - backend
+    develop:
+    watch:
+        - action: sync
+          path: ./components
+          target: /app/components
+          ignore:
+            - node_modules/
+        - action: rebuild
+          path: package.json 
 
   backend: 
     build: 
